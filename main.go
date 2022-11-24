@@ -10,24 +10,26 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+func getButtons() []*fyne.Container {
+	x := 0
+	var buttons []*fyne.Container
+	for x < 9 {
+		btn1, color1, finalButton1 := getButtonWithColor(color.RGBA{R: 0, G: 0, B: 255})
+		btn1.SetText("test")
+		color1.FillColor = color.RGBA{R: 255}
+		buttons = append(buttons, finalButton1)
+		x++
+	}
+	return buttons
+}
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Morpion multijoueur")
 	w.Resize(fyne.NewSize(720, 480))
-	btn1, color1, finalButton1 := getButtonWithColor(color.RGBA{R: 0, G: 0, B: 255})
-	btn1.SetText("test")
-	color1.FillColor = color.RGBA{R: 255}
-	// btn.ExtendBaseWidget(btn)
-	button2 := widget.NewButton("", nil)
-	button3 := widget.NewButton("", nil)
-	button4 := widget.NewButton("", nil)
-	button5 := widget.NewButton("", nil)
-	button6 := widget.NewButton("", nil)
-	button7 := widget.NewButton("", nil)
-	button8 := widget.NewButton("", nil)
-	button9 := widget.NewButton("", nil)
-	morpioncontainer := container.NewGridWithRows(3, finalButton1, button2, button3, button4, button5, button6, button7, button8, button9)
-	text := canvas.NewText("Morpion", color.White)
+	buttons := getButtons()
+	morpioncontainer := container.NewGridWithRows(3, buttons[0], buttons[1], buttons[2], buttons[3], buttons[4], buttons[5], buttons[6], buttons[7], buttons[8])
+	text := canvas.NewText("Morpion", color.RGBA{R: 255, B: 255})
 	text.Alignment = fyne.TextAlignCenter
 	maincontainer := container.NewBorder(text, nil, nil, nil, morpioncontainer)
 	w.SetContent(maincontainer)
