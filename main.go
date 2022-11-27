@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"image/color"
 	"log"
 	"net"
@@ -64,7 +65,12 @@ func SendPseudo() {
 		return
 	}
 	isPseudoOkString := string(isPseudoOk[:n])
-	log.Println(isPseudoOkString)
+	if isPseudoOkString != "pseudook" {
+		log.Println(isPseudoOkString)
+		conn.Close()
+		return
+	}
+	fmt.Println("Connecté !")
 }
 
 func login() {
