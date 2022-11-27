@@ -20,6 +20,7 @@ var pseudoEntry *widget.Entry
 var addressOfServer *widget.Entry
 var portOfServer *widget.Entry
 var isCurrentlyLogin bool
+var joinPartyEntry *widget.Entry
 
 func getInfos() (address, port, pseudo string, err error) {
 	if pseudoEntry.Text == "" {
@@ -34,11 +35,34 @@ func getInfos() (address, port, pseudo string, err error) {
 	return address, port, pseudo, nil
 }
 
+func PartyCreated() {
+	dialog.NewInformation("Partie créée", "Partie créée avec succès !", mainWindow).Show()
+}
+
 func CreateParty() {
-	log.Println("En développement...")
+	_, err := conn.Write([]byte("createparty"))
+	if err != nil {
+		dialog.NewError(err, mainWindow).Show()
+		return
+	}
+	slice := make([]byte, 1024)
+	n, err := conn.Read(slice)
+	if err != nil {
+		dialog.NewError(err, mainWindow).Show()
+		return
+	}
+	response := string(slice[:n])
+	if response == "partycreated" {
+		PartyCreated()
+		return
+	}
 }
 
 func JoinParty() {
+	if joinPartyEntry.Text == "" {
+		dialog.NewError(errors.New("ID de la partie nécessaire"), mainWindow).Show()
+		return
+	}
 	log.Println("En développement...")
 }
 
@@ -46,12 +70,12 @@ func LoginSuccessfully() {
 	createPartyButton := widget.NewButton("Créer une partie", CreateParty)
 	orLabel := widget.NewLabel("OU")
 	orLabel.Alignment = fyne.TextAlignCenter
-	joinPartyLabel := widget.NewLabel("ID de la partie")
-	joinPartyLabel.Alignment = fyne.TextAlignCenter
-	joinPartyLabel.TextStyle = fyne.TextStyle{Bold: true}
-	joinPartyEntry := widget.NewEntry()
+	joinPartyEntry = widget.NewEntry()
 	joinPartyButton := widget.NewButton("Rejoindre une partie", JoinParty)
-	mainContainer := container.NewVBox(createPartyButton, orLabel, joinPartyLabel, joinPartyEntry, joinPartyButton)
+	joinPartyForm := widget.NewForm(
+		widget.NewFormItem("ID de la partie : ", joinPartyEntry),
+	)
+	mainContainer := container.NewVBox(createPartyButton, orLabel, joinPartyForm, joinPartyButton)
 	mainWindow.SetContent(mainContainer)
 }
 
