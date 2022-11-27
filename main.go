@@ -43,10 +43,15 @@ func JoinParty() {
 }
 
 func LoginSuccessfully() {
-	mainWindow.Resize(fyne.NewSize(0, 0))
 	createPartyButton := widget.NewButton("Créer une partie", CreateParty)
+	orLabel := widget.NewLabel("OU")
+	orLabel.Alignment = fyne.TextAlignCenter
+	joinPartyLabel := widget.NewLabel("ID de la partie")
+	joinPartyLabel.Alignment = fyne.TextAlignCenter
+	joinPartyLabel.TextStyle = fyne.TextStyle{Bold: true}
+	joinPartyEntry := widget.NewEntry()
 	joinPartyButton := widget.NewButton("Rejoindre une partie", JoinParty)
-	mainContainer := container.NewVBox(createPartyButton, joinPartyButton)
+	mainContainer := container.NewVBox(createPartyButton, orLabel, joinPartyLabel, joinPartyEntry, joinPartyButton)
 	mainWindow.SetContent(mainContainer)
 }
 
