@@ -124,6 +124,7 @@ func main() {
 	loginWin.ShowAndRun()
 }
 
+// Inutile pour l'instant
 func getButtonWithColor(c color.Color) (*widget.Button, *canvas.Rectangle, *fyne.Container) {
 	btn := widget.NewButton("", nil)
 	btn_color := canvas.NewRectangle(c)
