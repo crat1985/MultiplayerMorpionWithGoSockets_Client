@@ -1,18 +1,26 @@
 package main
 
 import (
+	"errors"
 	"image/color"
 	"log"
+	"net"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
 var a fyne.App
-var mainWindow fyne.Window
+var loginWin fyne.Window
+var conn net.Conn
+var pseudoEntry *widget.Entry
+var addressOfServer *widget.Entry
+var portOfServer *widget.Entry
+var isCurrentlyLogin bool
 
 func getButtons() []*fyne.Container {
 	var buttons []*fyne.Container
@@ -34,39 +42,80 @@ func undefined() {
 	log.Print(maincontainer)
 }
 
+func getInfos() (address, port, pseudo string, err error) {
+	if pseudoEntry.Text == "" {
+		return "", "", "", errors.New("veuillez entrer un pseudo")
+	}
+	if addressOfServer.Text == "" {
+		address = addressOfServer.PlaceHolder
+	}
+	if portOfServer.Text == "" {
+		port = portOfServer.PlaceHolder
+	}
+	return address, port, pseudo, nil
+}
+
+func SendPseudo() {
+	conn.Write([]byte(pseudoEntry.Text))
+	isPseudoOk := make([]byte, 1024)
+	n, err := conn.Read(isPseudoOk)
+	if err != nil {
+		dialog.NewError(err, loginWin).Show()
+		return
+	}
+	isPseudoOkString := string(isPseudoOk[:n])
+	log.Println(isPseudoOkString)
+}
+
 func login() {
-	mainWindow.Hide()
-	loginWin := a.NewWindow("Se connecter")
-	pseudoEntry := widget.NewEntry()
-	passwordEntry := widget.NewPasswordEntry()
-	form := widget.NewForm(
-		widget.NewFormItem("Pseudo : ", pseudoEntry),
-		widget.NewFormItem("Mot de passe : ", passwordEntry),
-	)
-	form.OnSubmit = func() {
-		log.Println("Submited !")
+	if isCurrentlyLogin {
+		return
 	}
-	form.OnCancel = func() {
-		log.Println("Canceled !")
+	defer func() {
+		isCurrentlyLogin = false
+	}()
+	var err error
+	address, port, _, err := getInfos()
+	if err != nil {
+		dialog.NewError(err, loginWin).Show()
+		return
 	}
-	loginWin.SetOnClosed(func() {
-		mainWindow.Show()
-	})
-	loginWin.SetContent(form)
-	loginWin.Resize(fyne.NewSize(350, loginWin.Canvas().Size().Height))
-	loginWin.SetFixedSize(true)
-	loginWin.CenterOnScreen()
-	loginWin.Show()
+	conn, err = net.Dial("tcp", address+":"+port)
+	if err != nil {
+		dialog.NewError(err, loginWin).Show()
+		return
+	}
+	SendPseudo()
 }
 
 func main() {
 	a = app.NewWithID("Morpion Multijoueur en Go")
-	mainWindow = a.NewWindow("Morpion multijoueur")
-	button := widget.NewButton("Se connecter", login)
-	mainWindow.SetContent(button)
-	mainWindow.SetFixedSize(true)
-	mainWindow.CenterOnScreen()
-	mainWindow.ShowAndRun()
+	loginWin = a.NewWindow("Morpion multijoueur")
+	pseudoEntry = widget.NewEntry()
+	pseudoEntry.SetPlaceHolder("Votre pseudo ici")
+	addressOfServer = widget.NewEntry()
+	addressOfServer.SetPlaceHolder("localhost")
+	portOfServer = widget.NewEntry()
+	portOfServer.SetPlaceHolder("8888")
+	form := widget.NewForm(
+		widget.NewFormItem("Pseudo : ", pseudoEntry),
+		widget.NewFormItem("Adresse du serveur : ", addressOfServer),
+		widget.NewFormItem("Port du serveur : ", portOfServer),
+	)
+	form.OnSubmit = login
+	form.OnCancel = a.Quit
+	loginWin.SetCloseIntercept(
+		dialog.NewConfirm("Quitter ?", "Voulez-vous vraiment quitter le jeu ?", func(b bool) {
+			if b {
+				loginWin.Close()
+			}
+		}, loginWin).Show,
+	)
+	loginWin.SetContent(form)
+	loginWin.Resize(fyne.NewSize(400, loginWin.Canvas().Size().Height))
+	loginWin.SetFixedSize(true)
+	loginWin.CenterOnScreen()
+	loginWin.ShowAndRun()
 }
 
 func getButtonWithColor(c color.Color) (*widget.Button, *canvas.Rectangle, *fyne.Container) {
